@@ -9,13 +9,13 @@ import (
 	"encoding/gob"
 	"bytes"
 	"sync"
+	"io/ioutil"
+
 	"github.com/google/uuid"
-
 	"github.com/huydx/proxxy/log"
-
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	"io/ioutil"
+	"fmt"
 )
 
 type RequestLogRecord struct {
@@ -49,7 +49,6 @@ func Write(r *http.Request) {
 	dataBuff := bytes.NewBuffer(make([]byte, 0))
 	encoder := gob.NewEncoder(dataBuff)
 	err := encoder.Encode(copyRequest(r))
-	log.Printf("%v", r.Body)
 	log.Fatal(err)
 	flush(dataBuff.Bytes())
 }
@@ -61,7 +60,10 @@ func WriteAsync(r *http.Request) {
 func copyRequest(r *http.Request) *RequestDup {
 	var bodyBytes []byte
 	if r.Body != nil {
-		bodyBytes, _ = ioutil.ReadAll(r.Body)
+		bodyBytes, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Error(err)
+		}
 		r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 	}
 	return &RequestDup{

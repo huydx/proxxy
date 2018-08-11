@@ -4,16 +4,16 @@
 package main
 
 import (
-	"net/url"
 	"net/http"
+	"net/url"
 
-	"github.com/huydx/proxxy/proxy"
 	"github.com/huydx/proxxy/log"
+	"github.com/huydx/proxxy/proxy"
 	"github.com/huydx/proxxy/requestLog"
 )
 
 func main() {
-	u, err := url.Parse("http://127.0.0.1:9090")
+	u, err := url.Parse("http://127.0.0.1:9999")
 	log.Fatal(err)
 	rvp := proxy.NewSingleHostReverseProxy(u)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
