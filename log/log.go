@@ -4,10 +4,10 @@
 package log
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"runtime"
-	"fmt"
 	"strings"
 )
 
@@ -31,7 +31,7 @@ func Warn(v ...interface{}) {
 }
 
 func Printf(s string, v ...interface{}) {
-	log.Printf(fileLine() + " " + s, v)
+	log.Printf(fileLine()+" "+s, v)
 }
 
 func fileLine() string {
@@ -47,4 +47,3 @@ func fileLine() string {
 	}
 	return fmt.Sprintf("%s:%d", file, line)
 }
-

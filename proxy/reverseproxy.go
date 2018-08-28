@@ -8,6 +8,7 @@ package proxy
 
 import (
 	"context"
+	"github.com/huydx/proxxy/log"
 	"io"
 	"net"
 	"net/http"
@@ -15,7 +16,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"github.com/huydx/proxxy/log"
 )
 
 // onExitFlushLoop is a callback set by tests to detect the state of the
