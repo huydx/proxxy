@@ -66,8 +66,7 @@ func WriteAsync(r *http.Request) {
 
 func loadRequestLog(from time.Time, to time.Time) []*RequestLogRecord {
 	rql := make([]*RequestLogRecord, 0)
-	db.Where("select * from request_log_records where ts <= ? and ts >= ?",
-		to, from).Find(&rql)
+	db.Where("ts <= ? and ts >= ?", to, from).Find(&rql)
 	return rql
 }
 

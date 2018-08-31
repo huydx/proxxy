@@ -7,19 +7,44 @@ import (
 	"net/http"
 	"net/url"
 
+	"fmt"
+	"github.com/gorilla/mux"
 	"github.com/huydx/proxxy/log"
 	"github.com/huydx/proxxy/proxy"
 	"github.com/huydx/proxxy/requestLog"
+	"io/ioutil"
+	"time"
 )
+
+type proxyHandler struct {
+	rvp *proxy.ReverseProxy
+}
+
+func (m *proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	requestLog.WriteAsync(r)
+	m.rvp.ServeHTTP(w, r)
+}
 
 func main() {
 	u, err := url.Parse("http://127.0.0.1:9999")
 	log.Fatal(err)
 	rvp := proxy.NewSingleHostReverseProxy(u)
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("got request %v", r)
-		requestLog.WriteAsync(r)
-		rvp.ServeHTTP(w, r)
-	})
-	http.ListenAndServe(":8080", nil)
+	router := mux.NewRouter()
+	router.HandleFunc("/logs", func(w http.ResponseWriter, r *http.Request) {
+		n := time.Now()
+		from := n.AddDate(-1, 0, 0)
+		to := n
+		rqs := requestLog.LoadRequest(from, to)
+		for _, r := range rqs {
+			body, err := ioutil.ReadAll(r.Body)
+			if err != nil {
+				fmt.Println(err)
+			} else {
+				fmt.Println(string(body))
+			}
+		}
+	}).Methods("GET")
+
+	go http.ListenAndServe(":8080", &proxyHandler{rvp: rvp})
+	http.ListenAndServe(":8081", router)
 }
