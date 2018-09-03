@@ -14,6 +14,7 @@ import (
 	"github.com/huydx/proxxy/log"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"fmt"
 )
 
 type RequestLogRecord struct {
@@ -41,12 +42,14 @@ func init() {
 	log.Fatal(err)
 }
 
-func WriteAsync(r *http.Request) {
+func Log(r *http.Request) {
 	dataBuff := bytes.NewBuffer(make([]byte, 0))
 	encoder := gob.NewEncoder(dataBuff)
-	var bodyBytes []byte
+	var bodyBytesDup []byte
 	if r.Body != nil {
 		bodyBytes, err := ioutil.ReadAll(r.Body)
+		bodyBytesDup = make([]byte, len(bodyBytes))
+		copy(bodyBytesDup, bodyBytes)
 		if err != nil {
 			log.Error(err)
 		}
@@ -57,8 +60,9 @@ func WriteAsync(r *http.Request) {
 		URL:    r.URL.String(),
 		Proto:  r.Proto,
 		Header: r.Header,
-		Body:   bodyBytes,
+		Body:   bodyBytesDup,
 	}
+	fmt.Println(string(dup.Body))
 	err := encoder.Encode(dup)
 	log.Fatal(err)
 	flush(dataBuff.Bytes())

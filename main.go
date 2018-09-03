@@ -4,16 +4,16 @@
 package main
 
 import (
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"time"
 
-	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/huydx/proxxy/log"
 	"github.com/huydx/proxxy/proxy"
 	"github.com/huydx/proxxy/requestLog"
-	"io/ioutil"
-	"time"
 )
 
 type proxyHandler struct {
@@ -21,7 +21,7 @@ type proxyHandler struct {
 }
 
 func (m *proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	requestLog.WriteAsync(r)
+	requestLog.Log(r)
 	m.rvp.ServeHTTP(w, r)
 }
 
