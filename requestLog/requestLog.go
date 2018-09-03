@@ -65,7 +65,7 @@ func Log(r *http.Request) {
 	fmt.Println(string(dup.Body))
 	err := encoder.Encode(dup)
 	log.Fatal(err)
-	flush(dataBuff.Bytes())
+	go flush(dataBuff.Bytes())
 }
 
 func loadRequestLog(from time.Time, to time.Time) []*RequestLogRecord {
