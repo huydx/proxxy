@@ -25,6 +25,14 @@ func (m *proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	m.rvp.ServeHTTP(w, r)
 }
 
+type staticHandler struct {
+	fs http.Handler
+}
+
+func (m *staticHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	m.fs.ServeHTTP(w, r)
+}
+
 func main() {
 	u, err := url.Parse("http://127.0.0.1:9999")
 	log.Fatal(err)
@@ -46,5 +54,6 @@ func main() {
 	}).Methods("GET")
 
 	go http.ListenAndServe(":8080", &proxyHandler{rvp: rvp})
-	http.ListenAndServe(":8081", router)
+	go http.ListenAndServe(":8081", router)
+	http.ListenAndServe(":8082", &staticHandler{fs: http.FileServer(http.Dir("view"))})
 }

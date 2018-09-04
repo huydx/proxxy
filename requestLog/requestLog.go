@@ -9,12 +9,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/huydx/proxxy/log"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	"fmt"
 )
 
 type RequestLogRecord struct {
