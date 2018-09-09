@@ -132,7 +132,8 @@ var hopHeaders = []string{
 	"Upgrade",
 }
 
-func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) int64 {
+	var startTime = time.Now().UnixNano()
 	transport := p.Transport
 	if transport == nil {
 		transport = http.DefaultTransport
@@ -188,8 +189,9 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Printf("http: proxy error: %v", err)
 		rw.WriteHeader(http.StatusBadGateway)
-		return
+		return -1
 	}
+	var endTime = time.Now().UnixNano()
 
 	removeConnectionHeaders(res.Header)
 
@@ -202,7 +204,7 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			log.Printf("http: proxy error: %v", err)
 			rw.WriteHeader(http.StatusBadGateway)
 			res.Body.Close()
-			return
+			return -1
 		}
 	}
 
@@ -233,7 +235,7 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if len(res.Trailer) == announcedTrailers {
 		copyHeader(rw.Header(), res.Trailer)
-		return
+		return endTime - startTime
 	}
 
 	for k, vv := range res.Trailer {
@@ -242,6 +244,8 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			rw.Header().Add(k, v)
 		}
 	}
+
+	return endTime - startTime
 }
 
 // removeConnectionHeaders removes hop-by-hop headers listed in the "Connection" header of h.

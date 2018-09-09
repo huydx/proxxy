@@ -4,12 +4,14 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
 
+	"encoding/gob"
 	"github.com/gorilla/mux"
 	"github.com/huydx/proxxy/log"
 	"github.com/huydx/proxxy/proxy"
@@ -21,8 +23,32 @@ type proxyHandler struct {
 }
 
 func (m *proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	requestLog.Log(r)
-	m.rvp.ServeHTTP(w, r)
+	var bodyBytesDup []byte
+	if r.Body != nil {
+		bodyBytes, err := ioutil.ReadAll(r.Body)
+		bodyBytesDup = make([]byte, len(bodyBytes))
+		copy(bodyBytesDup, bodyBytes)
+		if err != nil {
+			log.Error(err)
+		}
+		r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+	}
+	t := m.rvp.ServeHTTP(w, r)
+	headerBytes := bytes.NewBuffer(make([]byte, 0))
+	enc := gob.NewEncoder(headerBytes)
+	err := enc.Encode(r.Header)
+	if err != nil {
+		log.Error(err)
+	}
+	dup := &requestLog.RequestDup{
+		Method:   r.Method,
+		URL:      r.URL.String(),
+		Proto:    r.Proto,
+		Header:   headerBytes.Bytes(),
+		Body:     bodyBytesDup,
+		TimeNano: t,
+	}
+	requestLog.Log(dup)
 }
 
 type staticHandler struct {
@@ -42,14 +68,9 @@ func main() {
 		n := time.Now()
 		from := n.AddDate(-1, 0, 0)
 		to := n
-		rqs := requestLog.LoadRequest(from, to)
+		rqs := requestLog.LoadRequestDup(from, to)
 		for _, r := range rqs {
-			body, err := ioutil.ReadAll(r.Body)
-			if err != nil {
-				fmt.Println(err)
-			} else {
-				fmt.Println(string(body))
-			}
+			fmt.Println(r)
 		}
 	}).Methods("GET")
 
