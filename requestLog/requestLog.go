@@ -28,9 +28,40 @@ type RequestDup struct {
 	Ts       time.Time
 }
 
+type RequestDupJson struct {
+	UUid     string            `json:"u_uid"`
+	Method   string            `json:"method"`
+	URL      string            `json:"url"`
+	Proto    string            `json:"proto"`
+	Header   map[string]string `json:"header"`
+	Body     string            `json:"body"`
+	TimeNano int64             `json:"time_nano"`
+	Ts       time.Time         `json:"time_stampt"`
+}
+
+func (dup *RequestDup) ToJSON() *RequestDupJson {
+	return &RequestDupJson{
+		UUid:     dup.UUid,
+		Method:   dup.Method,
+		URL:      dup.URL,
+		Proto:    dup.Proto,
+		Header:   decoderHeader(dup.Header),
+		Body:     string(dup.Body),
+		TimeNano: dup.TimeNano,
+		Ts:       dup.Ts,
+	}
+}
+
+func decoderHeader(headerBytes []byte) map[string]string {
+	res := make(map[string]string)
+	dc := gob.NewDecoder(bytes.NewBuffer(headerBytes))
+	dc.Decode(&res)
+	return res
+}
+
 func (rql *RequestDup) String() string {
-	return fmt.Sprintf("Method: %s; Header: %v; Body: %s; TimeNano: %d",
-		rql.Method, rql.Header, string(rql.Body), rql.TimeNano)
+	return fmt.Sprintf("Method: %s; Header: %v; Body: %s; TimeMs: %f",
+		rql.Method, decoderHeader(rql.Header), string(rql.Body), float64(rql.TimeNano)/1000000.0)
 }
 
 var db *gorm.DB
@@ -57,6 +88,7 @@ func Log(dup *RequestDup) {
 func LoadRequestDup(from time.Time, to time.Time) []*RequestDup {
 	rql := make([]*RequestDup, 0)
 	db.Where("ts <= ? and ts >= ?", to, from).Find(&rql)
+	fmt.Println(len(rql))
 	return rql
 }
 

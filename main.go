@@ -13,6 +13,7 @@ import (
 
 	"encoding/gob"
 	"github.com/gorilla/mux"
+	"github.com/huydx/proxxy/analysys"
 	"github.com/huydx/proxxy/log"
 	"github.com/huydx/proxxy/proxy"
 	"github.com/huydx/proxxy/requestLog"
@@ -46,6 +47,7 @@ func (m *proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Proto:    r.Proto,
 		Header:   headerBytes.Bytes(),
 		Body:     bodyBytesDup,
+		Ts:       time.Now(),
 		TimeNano: t,
 	}
 	requestLog.Log(dup)
@@ -72,6 +74,15 @@ func main() {
 		for _, r := range rqs {
 			fmt.Println(r)
 		}
+	}).Methods("GET")
+	router.HandleFunc("/max", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(analysys.MaxLatency())
+	}).Methods("GET")
+	router.HandleFunc("/min", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(analysys.MinLatency())
+	}).Methods("GET")
+	router.HandleFunc("/sorted", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(analysys.SortByLatency(10, 0))
 	}).Methods("GET")
 
 	go http.ListenAndServe(":8080", &proxyHandler{rvp: rvp})
